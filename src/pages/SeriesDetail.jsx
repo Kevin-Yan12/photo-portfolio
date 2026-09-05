@@ -183,22 +183,24 @@ function Lightbox({
         className="relative flex h-full w-full flex-col items-center justify-center gap-3"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 装裱主图：圆角 + 外发光柔影 + 细描边 */}
-        <div className="relative h-[78vh] w-[92vw] overflow-hidden rounded-2xl bg-black shadow-[0_0_80px_20px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
+        {/* 主图区：透明容器，圆角/柔影/描边直接作用于照片 */}
+        <div className="relative h-[78vh] w-[92vw]">
           {!loaded && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-700 border-t-white" />
             </div>
           )}
 
-          <img
-            src={displayUrl(photo.cloudinaryId.trim())}
-            alt={photo.title}
-            onLoad={() => setLoaded(true)}
-            className={`h-full w-full object-contain transition-opacity duration-300 ${
-              loaded ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
+          <div className="flex h-full w-full items-center justify-center">
+            <img
+              src={displayUrl(photo.cloudinaryId.trim())}
+              alt={photo.title}
+              onLoad={() => setLoaded(true)}
+              className={`max-h-full max-w-full rounded-xl object-contain shadow-[0_0_80px_20px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-opacity duration-300 ${
+                loaded ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          </div>
 
           {/* 右上角：下载 + 关闭，悬浮半透明 */}
           <div className="absolute right-3 top-3 z-50 flex items-center gap-2">
