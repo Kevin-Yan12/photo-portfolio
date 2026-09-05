@@ -18,7 +18,7 @@ function CoverImage({ cloudinaryId, alt }) {
         loading="lazy"
         decoding="async"
         onLoad={() => setLoaded(true)}
-        className={`absolute inset-0 z-10 h-full w-full object-cover transition-opacity duration-700 ${
+        className={`absolute inset-0 z-10 h-full w-full object-cover transition-all duration-[400ms] ease-out brightness-[0.8] group-hover:scale-[1.04] group-hover:brightness-[0.95] ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -30,15 +30,18 @@ function CoverCard({ name, slug, cover, count }) {
   return (
     <Link
       to={`/series/${slug}`}
-      className="group relative block aspect-[3/2] overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900 transition-all duration-300 hover:-translate-y-1 hover:border-neutral-600 hover:shadow-lg hover:shadow-black/20"
+      className="group relative block aspect-[3/2] overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors duration-300 hover:-translate-y-1 hover:border-white/30 hover:shadow-lg hover:shadow-black/20"
     >
       <CoverImage cloudinaryId={cover.cloudinaryId} alt={`${name} 封面`} />
 
-      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 z-20 h-[40%] bg-gradient-to-t from-black/80 to-transparent" />
 
       <div className="absolute bottom-0 left-0 z-30 p-5">
         <h3 className="text-xl font-medium text-white">{name}</h3>
         <p className="mt-1 text-sm text-neutral-300">{count} 张照片</p>
+        <p className="mt-1.5 text-xs text-neutral-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          查看系列 →
+        </p>
       </div>
     </Link>
   );
