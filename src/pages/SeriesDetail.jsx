@@ -85,10 +85,10 @@ function DownloadButton({ photo }) {
     <button
       onClick={handleDownload}
       disabled={status === 'loading'}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur transition-colors ${
         status === 'error'
-          ? 'border-red-900 bg-red-950/30 text-red-300 hover:border-red-700 hover:text-red-200'
-          : 'border-neutral-600 bg-neutral-800 text-neutral-200 hover:border-neutral-400 hover:text-white'
+          ? 'border-red-900/70 bg-red-950/40 text-red-300 hover:border-red-700 hover:text-red-200'
+          : 'border-white/20 bg-black/40 text-white hover:border-white/40 hover:bg-black/70'
       } ${status === 'loading' ? 'cursor-not-allowed opacity-70' : ''}`}
     >
       {label}
@@ -104,6 +104,13 @@ function Lightbox({
   hasPrev,
   hasNext,
 }) {
+  const [showInfo, setShowInfo] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [bgSrc, setBgSrc] = useState(() =>
+    displayUrl(photo.cloudinaryId.trim())
+  );
+  const [bgVisible, setBgVisible] = useState(true);
+
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -122,91 +129,165 @@ function Lightbox({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, onPrev, onNext]);
 
+  // 切换照片：重置加载状态、收起信息条
+  useEffect(() => {
+    setLoaded(false);
+    setShowInfo(false);
+  }, [photo.id]);
+
+  // 环境光背景交叉淡入
+  useEffect(() => {
+    const next = displayUrl(photo.cloudinaryId.trim());
+    if (next === bgSrc) return undefined;
+    setBgVisible(false);
+    const timer = setTimeout(() => {
+      setBgSrc(next);
+      setBgVisible(true);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [photo.cloudinaryId, bgSrc]);
+
+  const handleBackdropClick = () => {
+    if (showInfo) {
+      setShowInfo(false);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/95 p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-50 overflow-hidden bg-black"
+      onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-label="图片预览"
     >
-      <button
-        onClick={onClose}
-        className="absolute right-5 top-5 z-50 rounded-full p-2 text-2xl text-neutral-400 transition-colors hover:text-white"
-        aria-label="关闭"
-      >
-        ×
-      </button>
-
+      {/* 环境光背景层：模糊放大副本 + 黑色遮罩，不拦截交互 */}
       <div
-        className="absolute right-20 top-5 z-50"
-        onClick={(e) => e.stopPropagation()}
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden="true"
       >
-        <DownloadButton photo={photo} />
+        <img
+          src={bgSrc}
+          alt=""
+          className={`h-full w-full scale-150 object-cover blur-[60px] transition-opacity duration-500 ${
+            bgVisible ? 'opacity-40' : 'opacity-0'
+          }`}
+        />
+        <div className="absolute inset-0 bg-black/50" />
       </div>
 
+      {/* 图片主容器 */}
       <div
-        className="relative mx-auto flex h-full w-full max-w-6xl flex-col items-center"
+        className="relative flex h-full w-full items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 图片区：自适应占满剩余空间 */}
-        <div className="relative flex w-full flex-1 min-h-0 items-center justify-center">
+        <div className="relative h-[82vh] w-[92vw]">
+          {!loaded && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-700 border-t-white" />
+            </div>
+          )}
+
+          <img
+            src={displayUrl(photo.cloudinaryId.trim())}
+            alt={photo.title}
+            onLoad={() => setLoaded(true)}
+            className={`h-full w-full object-contain transition-opacity duration-300 ${
+              loaded ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+
+          {/* 右上角：下载 + 关闭，悬浮半透明 */}
+          <div className="absolute right-3 top-3 z-50 flex items-center gap-2">
+            <DownloadButton photo={photo} />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className="rounded-full border border-white/20 bg-black/40 p-2 text-xl leading-none text-white backdrop-blur transition-colors hover:border-white/40 hover:bg-black/70"
+              aria-label="关闭"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* 左右切换箭头 */}
           {hasPrev && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onPrev();
               }}
-              className="absolute left-0 z-50 rounded-full bg-black/40 p-3 text-white backdrop-blur transition-colors hover:bg-black/60 sm:-left-14"
+              className="absolute left-2 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-3 text-2xl leading-none text-white backdrop-blur transition-colors hover:border-white/40 hover:bg-black/70"
               aria-label="上一张"
             >
               ‹
             </button>
           )}
-
-          <img
-            src={displayUrl(photo.cloudinaryId.trim())}
-            alt={photo.title}
-            className="max-h-full max-w-full rounded-lg object-contain"
-          />
-
           {hasNext && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onNext();
               }}
-              className="absolute right-0 z-50 rounded-full bg-black/40 p-3 text-white backdrop-blur transition-colors hover:bg-black/60 sm:-right-14"
+              className="absolute right-2 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-3 text-2xl leading-none text-white backdrop-blur transition-colors hover:border-white/40 hover:bg-black/70"
               aria-label="下一张"
             >
               ›
             </button>
           )}
-        </div>
 
-        {/* 信息栏：最大高度固定，内容内部滚动 */}
-        <div className="mt-4 w-full max-w-3xl shrink-0 overflow-y-auto rounded-lg border border-neutral-800/50 bg-neutral-900/70 p-5 text-center text-neutral-200 backdrop-blur max-h-[35vh] md:max-h-[30vh]">
-          <h2 className="text-xl font-light text-white">{photo.title}</h2>
-
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-400">
-            {photo.location && <span>{photo.location}</span>}
-            {photo.location && photo.date && <span>·</span>}
-            {photo.date && <span>{photo.date}</span>}
+          {/* 底部中央：信息开关 */}
+          <div className="absolute bottom-3 left-1/2 z-50 -translate-x-1/2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowInfo((v) => !v);
+              }}
+              className={`rounded-full border px-4 py-1.5 text-xs tracking-wider backdrop-blur transition-all duration-300 ${
+                showInfo
+                  ? 'border-white/40 bg-black/60 text-white'
+                  : 'border-white/20 bg-black/40 text-neutral-300 hover:bg-black/60 hover:text-white'
+              }`}
+            >
+              ℹ️ 详细信息
+            </button>
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-neutral-500">
-            {photo.gear && <span>{photo.gear}</span>}
-            {photo.gear && photo.params && <span>·</span>}
-            {photo.params && <span>{photo.params}</span>}
-          </div>
+          {/* 信息条：默认收起，底部滑出 */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`absolute bottom-14 left-1/2 z-50 w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-white/10 bg-black/60 p-5 text-center backdrop-blur-md transition-all duration-300 ${
+              showInfo
+                ? 'translate-y-0 opacity-100'
+                : 'pointer-events-none translate-y-3 opacity-0'
+            }`}
+          >
+            <h2 className="text-lg font-light text-white">{photo.title}</h2>
 
-          {photo.tags && photo.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              {photo.tags.map((tag) => (
-                <Tag key={tag}>{tag}</Tag>
-              ))}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-300">
+              {photo.location && <span>{photo.location}</span>}
+              {photo.location && photo.date && <span>·</span>}
+              {photo.date && <span>{photo.date}</span>}
             </div>
-          )}
+
+            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400">
+              {photo.gear && <span>{photo.gear}</span>}
+              {photo.gear && photo.params && <span>·</span>}
+              {photo.params && <span>{photo.params}</span>}
+            </div>
+
+            {photo.tags && photo.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {photo.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
