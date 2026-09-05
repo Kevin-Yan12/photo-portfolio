@@ -5,6 +5,7 @@ import Series from './pages/Series';
 import SeriesDetail from './pages/SeriesDetail';
 import About from './pages/About';
 import Guide from './pages/Guide';
+import Footer from './components/Footer';
 
 function Navigation() {
   const [scrolled, setScrolled] = useState(false);
@@ -73,6 +74,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/guide" element={<Guide />} />
         </Routes>
+        <Footer />
       </div>
     </BrowserRouter>
   );

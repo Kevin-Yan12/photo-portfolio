@@ -1,8 +1,56 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import photos from '../data/photos.json';
-import { thumbUrl } from '../utils/cloudinary';
+import { displayUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
+
+// 展示层文案映射：数据仍全部来自 photos.json，这里只做排版格式化
+const SERIES_LABELS = {
+  hongkong: 'HONG KONG',
+};
+
+function getSeriesLabel(name) {
+  return SERIES_LABELS[name.toLowerCase()] ?? name.toUpperCase();
+}
+
+function getHeroPhoto() {
+  return photos.find((photo) => photo.id === 'shenzhen10') ?? photos[0];
+}
+
+function Reveal({ children, delay = 0, className = '' }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ease-out ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 function CoverImage({ cloudinaryId, alt }) {
   const [loaded, setLoaded] = useState(false);
@@ -13,12 +61,12 @@ function CoverImage({ cloudinaryId, alt }) {
         <div className="absolute inset-0 z-0 animate-pulse bg-neutral-800" />
       )}
       <img
-        src={thumbUrl(cloudinaryId.trim())}
+        src={displayUrl(cloudinaryId.trim())}
         alt={alt}
         loading="lazy"
         decoding="async"
         onLoad={() => setLoaded(true)}
-        className={`absolute inset-0 z-10 h-full w-full object-cover transition-all duration-[400ms] ease-out brightness-[0.8] group-hover:scale-[1.04] group-hover:brightness-[0.95] ${
+        className={`absolute inset-0 z-10 h-full w-full object-cover transition-all duration-[400ms] ease-out brightness-[0.85] group-hover:scale-[1.04] group-hover:brightness-[0.95] ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -26,21 +74,22 @@ function CoverImage({ cloudinaryId, alt }) {
   );
 }
 
-function CoverCard({ name, slug, cover, count }) {
+function SeriesCard({ name, slug, cover, count, className = '' }) {
   return (
     <Link
       to={`/series/${slug}`}
-      className="group relative block aspect-[3/2] overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors duration-300 hover:-translate-y-1 hover:border-white/30 hover:shadow-lg hover:shadow-black/20"
+      className={`group relative block h-[300px] w-full overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors duration-300 hover:border-white/30 md:h-full ${className}`}
     >
       <CoverImage cloudinaryId={cover.cloudinaryId} alt={`${name} 封面`} />
 
-      <div className="absolute inset-x-0 bottom-0 z-20 h-[40%] bg-gradient-to-t from-black/80 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 z-20 h-[45%] bg-gradient-to-t from-black/80 to-transparent" />
 
       <div className="absolute bottom-0 left-0 z-30 p-5">
-        <h3 className="text-xl font-medium text-white">{name}</h3>
-        <p className="mt-1 text-sm text-neutral-300">{count} 张照片</p>
-        <p className="mt-1.5 text-xs text-neutral-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          查看系列 →
+        <p className="text-sm font-medium uppercase tracking-[0.15em] text-white">
+          {getSeriesLabel(name)}
+        </p>
+        <p className="mt-1.5 text-xs uppercase tracking-[0.15em] text-neutral-400">
+          {String(count).padStart(2, '0')} FRAMES
         </p>
       </div>
     </Link>
@@ -48,6 +97,8 @@ function CoverCard({ name, slug, cover, count }) {
 }
 
 export default function Home() {
+  const heroPhoto = getHeroPhoto();
+
   const seriesMap = new Map();
   for (const photo of photos) {
     if (!seriesMap.has(photo.series)) {
@@ -63,24 +114,66 @@ export default function Home() {
     count: items.length,
   }));
 
+  const selectedSeries = seriesList.slice(0, 3);
+
   return (
-    <main className="flex-1 px-6 py-16">
-      <section className="mx-auto max-w-4xl text-center">
-        <h1 className="text-4xl font-light tracking-tight sm:text-5xl">
-          个人摄影作品展示
-        </h1>
-        <p className="mt-4 text-neutral-400">
-          用镜头记录城市、自然与街头的光影瞬间。
-        </p>
+    <main className="flex-1">
+      {/* Hero 首屏 */}
+      <section className="relative -mt-16 flex h-screen items-center justify-center overflow-hidden">
+        <img
+          src={displayUrl(heroPhoto.cloudinaryId.trim())}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+
+        <div className="relative z-10 flex flex-col items-center px-6 text-center">
+          <h1 className="animate-hero-fade text-[clamp(3rem,8vw,7rem)] font-light tracking-[0.2em] text-white">
+            LENS
+          </h1>
+          <p
+            className="animate-hero-fade mt-6 max-w-xl text-base text-neutral-300 sm:text-lg"
+            style={{ animationDelay: '0.15s' }}
+          >
+            用镜头记录城市、自然与街头的光影瞬间
+          </p>
+          <a
+            href="#series"
+            className="animate-hero-fade mt-10 inline-block border border-white/60 px-8 py-3 text-sm tracking-[0.25em] text-white transition-colors duration-300 hover:bg-white hover:text-black"
+            style={{ animationDelay: '0.3s' }}
+          >
+            探索作品 ↓
+          </a>
+        </div>
       </section>
 
-      <section className="mx-auto mt-16 max-w-6xl">
-        <h2 className="mb-6 text-sm font-medium uppercase tracking-widest text-neutral-500">
-          系列画廊
-        </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {seriesList.map((series) => (
-            <CoverCard key={series.slug} {...series} />
+      {/* 精选系列 */}
+      <section id="series" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+              Selected Series
+            </p>
+            <h2 className="mt-2 text-2xl font-light text-white">精选系列</h2>
+          </div>
+          <Link
+            to="/series"
+            className="text-sm text-neutral-400 transition-colors duration-200 hover:text-white"
+          >
+            查看全部 →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:auto-rows-[236px]">
+          {selectedSeries.map((series, index) => (
+            <Reveal
+              key={series.slug}
+              delay={index * 100}
+              className={index === 0 ? 'md:row-span-2' : ''}
+            >
+              <SeriesCard {...series} />
+            </Reveal>
           ))}
         </div>
       </section>
