@@ -178,12 +178,13 @@ function Lightbox({
         <div className="absolute inset-0 bg-black/50" />
       </div>
 
-      {/* 图片主容器 */}
+      {/* 图片主容器 + 下方工具条 */}
       <div
-        className="relative flex h-full w-full items-center justify-center"
+        className="relative flex h-full w-full flex-col items-center justify-center gap-3"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-[82vh] w-[92vw]">
+        {/* 装裱主图：圆角 + 外发光柔影 + 细描边 */}
+        <div className="relative h-[78vh] w-[92vw] overflow-hidden rounded-2xl bg-black shadow-[0_0_80px_20px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
           {!loaded && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-700 border-t-white" />
@@ -240,54 +241,53 @@ function Lightbox({
             </button>
           )}
 
-          {/* 底部中央：信息开关 */}
-          <div className="absolute bottom-3 left-1/2 z-50 -translate-x-1/2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowInfo((v) => !v);
-              }}
-              className={`rounded-full border px-4 py-1.5 text-xs tracking-wider backdrop-blur transition-all duration-300 ${
-                showInfo
-                  ? 'border-white/40 bg-black/60 text-white'
-                  : 'border-white/20 bg-black/40 text-neutral-300 hover:bg-black/60 hover:text-white'
-              }`}
-            >
-              ℹ️ 详细信息
-            </button>
-          </div>
+        </div>
 
-          {/* 信息条：默认收起，底部滑出 */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`absolute bottom-14 left-1/2 z-50 w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-white/10 bg-black/60 p-5 text-center backdrop-blur-md transition-all duration-300 ${
-              showInfo
-                ? 'translate-y-0 opacity-100'
-                : 'pointer-events-none translate-y-3 opacity-0'
+        {/* 图片下方细窄工具条 */}
+        <div className="flex h-8 items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowInfo((v) => !v);
+            }}
+            className={`text-xs tracking-widest transition-colors duration-200 ${
+              showInfo ? 'text-white' : 'text-neutral-400 hover:text-white'
             }`}
           >
-            <h2 className="text-lg font-light text-white">{photo.title}</h2>
+            详细信息
+          </button>
+        </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-300">
-              {photo.location && <span>{photo.location}</span>}
-              {photo.location && photo.date && <span>·</span>}
-              {photo.date && <span>{photo.date}</span>}
-            </div>
+        {/* 信息条：默认收起，底部滑出（位于图片容器外） */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute bottom-14 left-1/2 z-50 w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-white/10 bg-black/60 p-5 text-center backdrop-blur-md transition-all duration-300 ${
+            showInfo
+              ? 'translate-y-0 opacity-100'
+              : 'pointer-events-none translate-y-3 opacity-0'
+          }`}
+        >
+          <h2 className="text-lg font-light text-white">{photo.title}</h2>
 
-            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400">
-              {photo.gear && <span>{photo.gear}</span>}
-              {photo.gear && photo.params && <span>·</span>}
-              {photo.params && <span>{photo.params}</span>}
-            </div>
-
-            {photo.tags && photo.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                {photo.tags.map((tag) => (
-                  <Tag key={tag}>{tag}</Tag>
-                ))}
-              </div>
-            )}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-300">
+            {photo.location && <span>{photo.location}</span>}
+            {photo.location && photo.date && <span>·</span>}
+            {photo.date && <span>{photo.date}</span>}
           </div>
+
+          <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400">
+            {photo.gear && <span>{photo.gear}</span>}
+            {photo.gear && photo.params && <span>·</span>}
+            {photo.params && <span>{photo.params}</span>}
+          </div>
+
+          {photo.tags && photo.tags.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {photo.tags.map((tag) => (
+                <Tag key={tag}>{tag}</Tag>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
