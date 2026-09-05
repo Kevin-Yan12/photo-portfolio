@@ -4,13 +4,15 @@ import photos from '../data/photos.json';
 import { displayUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
 
-// 展示层文案映射：数据仍全部来自 photos.json，这里只做排版格式化
+// 系列中文名映射：数据仍全部来自 photos.json，这里只做展示层文案转换
 const SERIES_LABELS = {
-  hongkong: 'HONG KONG',
+  ustb: 'USTB',
+  shenzhen: '深圳',
+  hongkong: '香港',
 };
 
 function getSeriesLabel(name) {
-  return SERIES_LABELS[name.toLowerCase()] ?? name.toUpperCase();
+  return SERIES_LABELS[name.toLowerCase()] ?? name;
 }
 
 function getHeroPhoto() {
@@ -88,8 +90,8 @@ function SeriesCard({ name, slug, cover, count, className = '' }) {
         <p className="text-sm font-medium uppercase tracking-[0.15em] text-white">
           {getSeriesLabel(name)}
         </p>
-        <p className="mt-1.5 text-xs uppercase tracking-[0.15em] text-neutral-400">
-          {String(count).padStart(2, '0')} FRAMES
+        <p className="mt-1.5 text-xs tracking-[0.15em] text-neutral-400">
+          {String(count).padStart(2, '0')} 张作品
         </p>
       </div>
     </Link>
@@ -152,8 +154,8 @@ export default function Home() {
       <section id="series" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">
-              Selected Series
+            <p className="text-xs tracking-[0.3em] text-neutral-500">
+              作品系列
             </p>
             <h2 className="mt-2 text-2xl font-light text-white">精选系列</h2>
           </div>

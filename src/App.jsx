@@ -19,7 +19,7 @@ function Navigation() {
 
   const headerClass = `fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
     scrolled
-      ? 'border-b border-white/10 bg-black/50 backdrop-blur-md'
+      ? 'border-b border-white/10 bg-black/65 backdrop-blur-[20px] backdrop-saturate-[1.8]'
       : 'border-b border-transparent bg-transparent'
   }`;
 
