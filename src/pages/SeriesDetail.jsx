@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import photos from '../data/photos.json';
 import { displayUrl, originalUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
@@ -191,7 +191,13 @@ function Lightbox({
             </div>
           )}
 
-          <div className="flex h-full w-full items-center justify-center">
+          <div
+            className="flex h-full w-full items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (showInfo) setShowInfo(false);
+            }}
+          >
             <img
               src={displayUrl(photo.cloudinaryId.trim())}
               alt={photo.title}
