@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import photos from '../data/photos.json';
 import { displayUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
+import { getSeriesLabel } from '../utils/series';
 
 function CoverImage({ cloudinaryId, alt }) {
   const [loaded, setLoaded] = useState(false);
@@ -63,13 +64,15 @@ export default function Series() {
             >
               <CoverImage
                 cloudinaryId={series.cover.cloudinaryId}
-                alt={`${series.name} 封面`}
+                alt={`${getSeriesLabel(series.name)} 封面`}
               />
 
               <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
               <div className="absolute bottom-0 left-0 z-30 p-5">
-                <h2 className="text-xl font-medium text-white">{series.name}</h2>
+                <h2 className="text-xl font-medium text-white">
+                  {getSeriesLabel(series.name)}
+                </h2>
                 <p className="mt-1 text-sm text-neutral-300">
                   {series.count} 张照片
                 </p>

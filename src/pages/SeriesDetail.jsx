@@ -4,6 +4,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import photos from '../data/photos.json';
 import { displayUrl, originalUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
+import { getSeriesLabel } from '../utils/series';
 import ImmersiveViewer from '../components/ImmersiveViewer';
 
 // 与 Tailwind md 断点一致：≤768px 视为移动端，灯箱启用触屏手势
@@ -551,7 +552,7 @@ export default function SeriesDetail() {
 
         <div className="mb-8 text-center sm:mb-10">
           <h1 className="text-3xl font-light tracking-tight sm:text-4xl">
-            {seriesName}
+            {getSeriesLabel(seriesName)}
           </h1>
           <p className="mt-2 text-neutral-400">
             {matchedPhotos.length} 张照片

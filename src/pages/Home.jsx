@@ -3,17 +3,7 @@ import { Link } from 'react-router-dom';
 import photos from '../data/photos.json';
 import { displayUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
-
-// 系列中文名映射：数据仍全部来自 photos.json，这里只做展示层文案转换
-const SERIES_LABELS = {
-  ustb: 'USTB',
-  shenzhen: '深圳',
-  hongkong: '香港',
-};
-
-function getSeriesLabel(name) {
-  return SERIES_LABELS[name.toLowerCase()] ?? name;
-}
+import { getSeriesLabel } from '../utils/series';
 
 function getHeroPhoto() {
   return photos.find((photo) => photo.id === 'shenzhen10') ?? photos[0];
@@ -82,7 +72,7 @@ function SeriesCard({ name, slug, cover, count, className = '' }) {
       to={`/series/${slug}`}
       className={`group relative block h-[300px] w-full overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors duration-300 hover:border-white/30 md:h-full ${className}`}
     >
-      <CoverImage cloudinaryId={cover.cloudinaryId} alt={`${name} 封面`} />
+      <CoverImage cloudinaryId={cover.cloudinaryId} alt={`${getSeriesLabel(name)} 封面`} />
 
       <div className="absolute inset-x-0 bottom-0 z-20 h-[45%] bg-gradient-to-t from-black/80 to-transparent" />
 
