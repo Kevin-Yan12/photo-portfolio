@@ -2,7 +2,10 @@
   "name": "延思成",
   "avatar": "",
   "bio": "摄影新手，尼康佬，爱拍风景。用镜头记录走过的路、看过的城市与偶然遇见的光。",
-  "links": [
-    { "label": "Email", "url": "13691545965@163.com" }
+  "contacts": [
+    { "label": "邮箱", "value": "13691545965@163.com" },
+    { "label": "电话", "value": "13691545965" },
+    { "label": "微信", "value": "13691545965" },
+    { "label": "GitHub", "value": "github.com/Kevin-Yan12", "url": "https://github.com/Kevin-Yan12" }
   ]
 }
