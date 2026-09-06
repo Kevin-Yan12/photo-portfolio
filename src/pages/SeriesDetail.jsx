@@ -252,50 +252,52 @@ function Lightbox({
         </div>
 
         {/* 图片下方细窄工具条 */}
-        <div className="flex h-8 items-center justify-center">
+        <div className="relative flex h-8 items-center justify-center">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowInfo((v) => !v);
             }}
-            className={`text-xs tracking-widest transition-colors duration-200 ${
-              showInfo ? 'text-white' : 'text-neutral-400 hover:text-white'
+            className={`rounded-full border px-4 py-1.5 text-xs tracking-widest transition-colors duration-200 ${
+              showInfo
+                ? 'border-white/70 text-white'
+                : 'border-white/30 text-neutral-300 hover:border-white/70 hover:text-white'
             }`}
           >
             详细信息
           </button>
-        </div>
 
-        {/* 信息条：默认收起，底部滑出（位于图片容器外） */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className={`absolute bottom-14 left-1/2 z-50 w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-white/10 bg-black/60 p-5 text-center backdrop-blur-md transition-all duration-300 ${
-            showInfo
-              ? 'translate-y-0 opacity-100'
-              : 'pointer-events-none translate-y-3 opacity-0'
-          }`}
-        >
-          <h2 className="text-lg font-light text-white">{photo.title}</h2>
+          {/* 信息条：位于按钮正上方展开，不遮挡按钮本身 */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`absolute bottom-full left-1/2 z-50 mb-3 w-[min(92vw,560px)] -translate-x-1/2 rounded-lg border border-white/10 bg-black/60 p-5 text-center backdrop-blur-md transition-all duration-300 ${
+              showInfo
+                ? 'translate-y-0 opacity-100'
+                : 'pointer-events-none translate-y-3 opacity-0'
+            }`}
+          >
+            <h2 className="text-lg font-light text-white">{photo.title}</h2>
 
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-300">
-            {photo.location && <span>{photo.location}</span>}
-            {photo.location && photo.date && <span>·</span>}
-            {photo.date && <span>{photo.date}</span>}
-          </div>
-
-          <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400">
-            {photo.gear && <span>{photo.gear}</span>}
-            {photo.gear && photo.params && <span>·</span>}
-            {photo.params && <span>{photo.params}</span>}
-          </div>
-
-          {photo.tags && photo.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              {photo.tags.map((tag) => (
-                <Tag key={tag}>{tag}</Tag>
-              ))}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-neutral-300">
+              {photo.location && <span>{photo.location}</span>}
+              {photo.location && photo.date && <span>·</span>}
+              {photo.date && <span>{photo.date}</span>}
             </div>
-          )}
+
+            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400">
+              {photo.gear && <span>{photo.gear}</span>}
+              {photo.gear && photo.params && <span>·</span>}
+              {photo.params && <span>{photo.params}</span>}
+            </div>
+
+            {photo.tags && photo.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {photo.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
