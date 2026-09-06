@@ -306,6 +306,7 @@ function Lightbox({
 
 export default function SeriesDetail() {
   const { slug } = useParams();
+  const navigate = useNavigate();
 
   const matchedPhotos = useMemo(() => {
     return photos.filter((photo) => slugify(photo.series) === slug);
@@ -351,6 +352,16 @@ export default function SeriesDetail() {
   return (
     <main className="flex-1 px-4 py-12 sm:px-6">
       <section className="mx-auto max-w-7xl">
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-sm text-neutral-400 transition-colors duration-200 hover:text-white"
+          >
+            ← 返回
+          </button>
+        </div>
+
         <div className="mb-8 text-center sm:mb-10">
           <h1 className="text-3xl font-light tracking-tight sm:text-4xl">
             {seriesName}
