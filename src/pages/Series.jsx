@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import photos from '../data/photos.json';
-import { displayUrl } from '../utils/cloudinary';
+import { thumbUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
 import { getSeriesLabel } from '../utils/series';
 
@@ -14,7 +14,7 @@ function CoverImage({ cloudinaryId, alt }) {
         <div className="absolute inset-0 z-0 animate-pulse bg-neutral-800" />
       )}
       <img
-        src={displayUrl(cloudinaryId.trim())}
+        src={thumbUrl(cloudinaryId.trim())}
         alt={alt}
         loading="lazy"
         decoding="async"

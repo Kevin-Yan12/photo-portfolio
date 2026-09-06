@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import photos from '../data/photos.json';
-import { displayUrl, originalUrl } from '../utils/cloudinary';
+import { displayUrl, originalUrl, thumbUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
 import { getSeriesLabel } from '../utils/series';
 import ImmersiveViewer from '../components/ImmersiveViewer';
@@ -47,7 +47,7 @@ function PhotoCard({ photo, onClick }) {
       aria-label={`打开大图：${photo.title}`}
     >
       <img
-        src={displayUrl(photo.cloudinaryId.trim())}
+        src={thumbUrl(photo.cloudinaryId.trim())}
         alt={photo.title}
         loading="lazy"
         decoding="async"
@@ -133,7 +133,7 @@ function Lightbox({
   const [showInfo, setShowInfo] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [bgSrc, setBgSrc] = useState(() =>
-    displayUrl(photo.cloudinaryId.trim())
+    thumbUrl(photo.cloudinaryId.trim())
   );
   const [bgVisible, setBgVisible] = useState(true);
   const [immersive, setImmersive] = useState(false);
@@ -238,7 +238,7 @@ function Lightbox({
 
   // 环境光背景交叉淡入
   useEffect(() => {
-    const next = displayUrl(photo.cloudinaryId.trim());
+    const next = thumbUrl(photo.cloudinaryId.trim());
     if (next === bgSrc) return undefined;
     setBgVisible(false);
     const timer = setTimeout(() => {

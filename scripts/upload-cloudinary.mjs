@@ -22,11 +22,31 @@ if (!KEY || !SECRET) {
 }
 
 const SUBDIRS = ['川西', '广州', '深圳', '香港', '九寨沟', '北科大'];
-const only = process.argv[2];
+// --force: 覆盖已存在的 public_id 并刷新 CDN（配合自定义源目录使用）
+// --src <目录>: 用指定目录的文件作为上传源（如 /tmp/lr-master 平铺目录）
+const force = process.argv.includes('--force');
+const srcIdx = process.argv.indexOf('--src');
+const overrideSrc = srcIdx > -1 ? process.argv[srcIdx + 1] : null;
+// 位置参数 = 非 flag、且不是 --src 的取值
+const positionals = [];
+for (let i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] === '--force') continue;
+  if (process.argv[i] === '--src') { i++; continue; }
+  positionals.push(process.argv[i]);
+}
+const only = positionals[0];
 
 const files = [];
 const MAX = 10 * 1024 * 1024; // Cloudinary 免费套餐单文件上限
 const COMPRESSED = join(ROOT, '..', '..', '图片素材-压缩版');
+if (overrideSrc) {
+  for (const f of readdirSync(overrideSrc)) {
+    const id = basename(f).replace(/\.jpe?g$/i, '');
+    if (only && id !== only) continue;
+    const path = join(overrideSrc, f);
+    files.push({ path, id, size: statSync(path).size });
+  }
+} else {
 for (const sub of SUBDIRS) {
   for (const f of readdirSync(join(SRC, sub))) {
     if (!f.toLowerCase().endsWith('.jpg')) continue;
@@ -48,10 +68,12 @@ for (const sub of SUBDIRS) {
     files.push({ path, id, size, compressed: f._compressed });
   }
 }
+}
 
 const sig = (params) => createHash('sha1').update(params + SECRET).digest('hex');
 
 async function exists(id) {
+  if (force) return false; // 覆盖模式不做存在性检查
   try {
     const r = await fetch(`https://res.cloudinary.com/${CLOUD}/image/upload/${id}`, { method: 'HEAD' });
     return r.status === 200;
@@ -67,7 +89,13 @@ async function upload({ path, id, size }) {
   form.append('public_id', id);
   form.append('api_key', KEY);
   form.append('timestamp', String(ts));
-  form.append('signature', sig(`public_id=${id}&timestamp=${ts}`));
+  if (force) {
+    form.append('overwrite', 'true');
+    form.append('invalidate', 'true');
+    form.append('signature', sig(`invalidate=true&overwrite=true&public_id=${id}&timestamp=${ts}`));
+  } else {
+    form.append('signature', sig(`public_id=${id}&timestamp=${ts}`));
+  }
   const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`, {
     method: 'POST',
     body: form,

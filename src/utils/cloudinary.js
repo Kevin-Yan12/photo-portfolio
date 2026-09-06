@@ -5,12 +5,14 @@ export function originalUrl(id) {
   return `${BASE_URL}/${id}`;
 }
 
+// 灯箱大图、首页 Hero 等全屏场景：高分辨率 + 高质量
 export function displayUrl(id) {
-  return `${BASE_URL}/w_1600,q_auto:good,f_auto/${id}`;
+  return `${BASE_URL}/w_2560,q_auto:best,f_auto/${id}`;
 }
 
+// 列表封面、瀑布流缩略图：小图快速加载
 export function thumbUrl(id) {
-  return `${BASE_URL}/w_600,q_auto:good,f_auto/${id}`;
+  return `${BASE_URL}/w_800,q_auto:good,f_auto/${id}`;
 }
 
 export function downloadUrl(id) {
