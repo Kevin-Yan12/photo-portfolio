@@ -3,6 +3,9 @@ const SERIES_LABELS = {
   ustb: '北科大',
   shenzhen: '深圳',
   hongkong: '香港',
+  chuanxi: '川西',
+  guangzhou: '广州',
+  jiuzhai: '九寨沟',
 };
 
 export function getSeriesLabel(name) {
