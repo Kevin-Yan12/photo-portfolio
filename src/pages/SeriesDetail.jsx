@@ -299,7 +299,10 @@ function Lightbox({
             /* 移动端：可缩放容器（key 变化时重置缩放并触发滑动过渡动画） */
             <div
               key={photo.id}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation(); // 不冒泡到遮罩，避免误关灯箱
+                if (showInfo) setShowInfo(false); // 与桌面端一致：点照片收起信息条
+              }}
               className={`flex h-full w-full items-center justify-center ${
                 slideDir === 'next'
                   ? 'lb-slide-next'
