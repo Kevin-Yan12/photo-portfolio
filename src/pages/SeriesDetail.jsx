@@ -1,8 +1,26 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import photos from '../data/photos.json';
 import { displayUrl, originalUrl } from '../utils/cloudinary';
 import { slugify } from '../utils/slugify';
+import ImmersiveViewer from '../components/ImmersiveViewer';
+
+// 与 Tailwind md 断点一致：≤768px 视为移动端，灯箱启用触屏手势
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia('(max-width: 768px)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handleChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handleChange);
+    return () => mq.removeEventListener('change', handleChange);
+  }, []);
+
+  return isMobile;
+}
 
 function Tag({ children }) {
   return (
@@ -96,6 +114,9 @@ function DownloadButton({ photo }) {
   );
 }
 
+const INFO_BTN_CLASS =
+  'rounded-full border px-4 py-1.5 text-xs tracking-widest transition-colors duration-200 ';
+
 function Lightbox({
   photo,
   onClose,
@@ -103,13 +124,25 @@ function Lightbox({
   onNext,
   hasPrev,
   hasNext,
+  index,
+  count,
+  onJump,
 }) {
+  const isMobile = useIsMobile();
   const [showInfo, setShowInfo] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [bgSrc, setBgSrc] = useState(() =>
     displayUrl(photo.cloudinaryId.trim())
   );
   const [bgVisible, setBgVisible] = useState(true);
+  const [immersive, setImmersive] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [slideDir, setSlideDir] = useState(null); // 'next' | 'prev' | null
+
+  const zwRef = useRef(null);
+  const scaleRef = useRef(1);
+  const touchRef = useRef(null);
+  const lastTapRef = useRef({ t: 0, x: 0, y: 0 });
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -121,19 +154,86 @@ function Lightbox({
 
   useEffect(() => {
     function handleKeyDown(e) {
+      if (immersive) return; // 沉浸模式有自己的 Esc 处理
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') onPrev();
       if (e.key === 'ArrowRight') onNext();
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, onPrev, onNext]);
+  }, [onClose, onPrev, onNext, immersive]);
 
-  // 切换照片：重置加载状态、收起信息条
+  // 切换照片：重置加载状态、收起信息条、复位缩放与滑动方向
   useEffect(() => {
     setLoaded(false);
     setShowInfo(false);
+    setSlideDir(null);
+    scaleRef.current = 1;
   }, [photo.id]);
+
+  // 预加载判断横竖构图，决定移动端是否显示「横屏观看」入口
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setIsLandscape(img.naturalWidth > img.naturalHeight);
+    img.src = displayUrl(photo.cloudinaryId.trim());
+    return () => {
+      img.onload = null;
+    };
+  }, [photo.cloudinaryId]);
+
+  // 移动端触屏手势：双击在 1x/2x 间切换，捏合缩放由 react-zoom-pan-pinch 处理
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) {
+      touchRef.current = null; // 多指 = 捏合，不参与滑动/双击判定
+      return;
+    }
+    const t = e.touches[0];
+    const now = Date.now();
+    const last = lastTapRef.current;
+
+    if (
+      now - last.t < 300 &&
+      Math.hypot(t.clientX - last.x, t.clientY - last.y) < 30
+    ) {
+      lastTapRef.current = { t: 0, x: 0, y: 0 };
+      touchRef.current = null;
+      const zw = zwRef.current;
+      if (!zw) return;
+      if (scaleRef.current > 1.05) {
+        zw.resetTransform(250);
+      } else {
+        zw.centerView(2, 250);
+      }
+      return;
+    }
+    lastTapRef.current = { t: now, x: t.clientX, y: t.clientY };
+    touchRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  // 1x 状态下水平滑动 ≥50px 切换照片；放大状态下单指拖动是平移，不切换
+  const handleTouchEnd = (e) => {
+    const start = touchRef.current;
+    touchRef.current = null;
+    if (!start || scaleRef.current > 1.05) return;
+
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    if (dx < 0 && hasNext) {
+      setSlideDir('next');
+      onNext();
+    } else if (dx > 0 && hasPrev) {
+      setSlideDir('prev');
+      onPrev();
+    }
+  };
+
+  const jumpTo = (i) => {
+    setSlideDir(null);
+    onJump(i);
+  };
 
   // 环境光背景交叉淡入
   useEffect(() => {
@@ -184,29 +284,76 @@ function Lightbox({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 主图区：透明容器，圆角/柔影/描边直接作用于照片 */}
-        <div className="relative h-[78vh] w-[92vw]">
+        <div
+          className="relative h-[64vh] w-[92vw] md:h-[78vh]"
+          onTouchStart={isMobile ? handleTouchStart : undefined}
+          onTouchEnd={isMobile ? handleTouchEnd : undefined}
+        >
           {!loaded && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-700 border-t-white" />
             </div>
           )}
 
-          <div
-            className="flex h-full w-full items-center justify-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (showInfo) setShowInfo(false);
-            }}
-          >
-            <img
-              src={displayUrl(photo.cloudinaryId.trim())}
-              alt={photo.title}
-              onLoad={() => setLoaded(true)}
-              className={`max-h-full max-w-full rounded-xl object-contain shadow-[0_0_80px_20px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-opacity duration-300 ${
-                loaded ? 'opacity-100' : 'opacity-0'
+          {isMobile ? (
+            /* 移动端：可缩放容器（key 变化时重置缩放并触发滑动过渡动画） */
+            <div
+              key={photo.id}
+              onClick={(e) => e.stopPropagation()}
+              className={`flex h-full w-full items-center justify-center ${
+                slideDir === 'next'
+                  ? 'lb-slide-next'
+                  : slideDir === 'prev'
+                  ? 'lb-slide-prev'
+                  : ''
               }`}
-            />
-          </div>
+            >
+              <TransformWrapper
+                ref={zwRef}
+                minScale={1}
+                maxScale={5}
+                limitToBounds
+                centerOnInit
+                disablePadding
+                wheel={{ disabled: true }}
+                doubleClick={{ disabled: true }}
+                onTransform={(_, state) => {
+                  scaleRef.current = state.scale;
+                }}
+              >
+                <TransformComponent
+                  wrapperStyle={{ width: '100%', height: '100%' }}
+                >
+                  <img
+                    src={displayUrl(photo.cloudinaryId.trim())}
+                    alt={photo.title}
+                    onLoad={() => setLoaded(true)}
+                    className={`max-h-full max-w-full rounded-xl object-contain shadow-[0_0_80px_20px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-opacity duration-300 ${
+                      loaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                </TransformComponent>
+              </TransformWrapper>
+            </div>
+          ) : (
+            /* 桌面端：保持原有交互不变 */
+            <div
+              className="flex h-full w-full items-center justify-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (showInfo) setShowInfo(false);
+              }}
+            >
+              <img
+                src={displayUrl(photo.cloudinaryId.trim())}
+                alt={photo.title}
+                onLoad={() => setLoaded(true)}
+                className={`max-h-full max-w-full rounded-xl object-contain shadow-[0_0_80px_20px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-opacity duration-300 ${
+                  loaded ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            </div>
+          )}
 
           {/* 右上角：下载 + 关闭，悬浮半透明 */}
           <div className="absolute right-3 top-3 z-50 flex items-center gap-2">
@@ -223,8 +370,8 @@ function Lightbox({
             </button>
           </div>
 
-          {/* 左右切换箭头 */}
-          {hasPrev && (
+          {/* 左右切换箭头（桌面端专用，移动端用滑动手势替代） */}
+          {!isMobile && hasPrev && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -236,7 +383,7 @@ function Lightbox({
               ‹
             </button>
           )}
-          {hasNext && (
+          {!isMobile && hasNext && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -251,8 +398,38 @@ function Lightbox({
 
         </div>
 
+        {/* 移动端进度圆点：当前照片高亮加宽，点击跳转 */}
+        {isMobile && count > 0 && (
+          <div className="flex max-w-[80vw] flex-wrap items-center justify-center gap-2">
+            {Array.from({ length: count }, (_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  jumpTo(i);
+                }}
+                aria-label={`查看第 ${i + 1} 张照片`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === index ? 'w-4 bg-white/90' : 'w-1.5 bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* 图片下方细窄工具条 */}
-        <div className="relative flex h-8 items-center justify-center">
+        <div className="relative flex h-8 items-center justify-center gap-3">
+          {isMobile && isLandscape && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImmersive(true);
+              }}
+              className={`${INFO_BTN_CLASS}border-white/30 text-neutral-300 hover:border-white/70 hover:text-white`}
+            >
+              横屏观看
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -300,6 +477,13 @@ function Lightbox({
           </div>
         </div>
       </div>
+
+      {immersive && (
+        <ImmersiveViewer
+          photo={photo}
+          onClose={() => setImmersive(false)}
+        />
+      )}
     </div>
   );
 }
@@ -390,6 +574,9 @@ export default function SeriesDetail() {
           onNext={goNext}
           hasPrev={activeIndex > 0}
           hasNext={activeIndex < matchedPhotos.length - 1}
+          index={activeIndex}
+          count={matchedPhotos.length}
+          onJump={setActiveIndex}
         />
       )}
     </main>
