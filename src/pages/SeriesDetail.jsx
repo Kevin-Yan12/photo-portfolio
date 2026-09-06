@@ -35,6 +35,11 @@ function PhotoCard({ photo, onClick }) {
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => {
+        // 悬停时预取高清图：点击打开灯箱前就提前下载
+        const img = new Image();
+        img.src = displayUrl(photo.cloudinaryId.trim());
+      }}
       className="group relative mb-4 cursor-zoom-in break-inside-avoid"
       role="button"
       tabIndex={0}
@@ -120,6 +125,8 @@ const INFO_BTN_CLASS =
 
 function Lightbox({
   photo,
+  prevPhoto,
+  nextPhoto,
   onClose,
   onPrev,
   onNext,
@@ -171,6 +178,13 @@ function Lightbox({
     setSlideDir(null);
     scaleRef.current = 1;
   }, [photo.id]);
+
+  // 预取相邻照片的高清图：用户切换时几乎瞬时显示（画质无损，纯提前下载）
+  useEffect(() => {
+    for (const p of [prevPhoto, nextPhoto]) {
+      if (p) new Image().src = displayUrl(p.cloudinaryId.trim());
+    }
+  }, [prevPhoto, nextPhoto]);
 
   // 预加载判断横竖构图，决定移动端是否显示「横屏观看」入口
   useEffect(() => {
@@ -573,6 +587,8 @@ export default function SeriesDetail() {
       {activePhoto && (
         <Lightbox
           photo={activePhoto}
+          prevPhoto={matchedPhotos[activeIndex - 1] ?? null}
+          nextPhoto={matchedPhotos[activeIndex + 1] ?? null}
           onClose={closeLightbox}
           onPrev={goPrev}
           onNext={goNext}

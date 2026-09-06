@@ -115,6 +115,7 @@ export default function Home() {
         <img
           src={displayUrl(heroPhoto.cloudinaryId.trim())}
           alt=""
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/55" />
