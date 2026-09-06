@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, NavLink, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Home from './pages/Home';
 import Series from './pages/Series';
 import SeriesDetail from './pages/SeriesDetail';
@@ -75,6 +76,7 @@ function App() {
           <Route path="/guide" element={<Guide />} />
         </Routes>
         <Footer />
+        <Analytics />
       </div>
     </BrowserRouter>
   );
