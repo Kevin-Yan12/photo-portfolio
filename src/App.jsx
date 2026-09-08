@@ -6,6 +6,7 @@ import Series from './pages/Series';
 import SeriesDetail from './pages/SeriesDetail';
 import About from './pages/About';
 import Guide from './pages/Guide';
+import Appreciate from './pages/Appreciate';
 import Footer from './components/Footer';
 
 function Navigation() {
@@ -53,6 +54,11 @@ function Navigation() {
             </NavLink>
           </li>
           <li>
+            <NavLink to="/appreciate" className={linkClass}>
+              赞赏
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/guide" className={linkClass}>
               使用说明
             </NavLink>
@@ -73,6 +79,7 @@ function App() {
           <Route path="/series" element={<Series />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/about" element={<About />} />
+          <Route path="/appreciate" element={<Appreciate />} />
           <Route path="/guide" element={<Guide />} />
         </Routes>
         <Footer />
